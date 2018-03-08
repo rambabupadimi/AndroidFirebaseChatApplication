@@ -29,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
     private RecyclerView recyclerView;
-    List userList;
     FirebaseRecyclerAdapter<Users,ExpensesViewHolder> firebaseRecyclerAdapter;
 
 
@@ -39,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat_users_list);
 
         userNotExist();
-
         setRecyclerView();
     }
 
@@ -51,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
             database.setPersistenceEnabled(true);
         }
 
-        databaseReference   = FirebaseDatabase.getInstance().getReference().child("Customers");
-        recyclerView        =   (RecyclerView) findViewById(R.id.chat_user_list_recylerview);
+        databaseReference   = FirebaseDatabase.getInstance().getReference().child("Admin");
+        recyclerView        =  findViewById(R.id.chat_user_list_recylerview);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
 
@@ -66,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 if(firebaseAuth.getCurrentUser() ==null)
                 {
-                    Intent intent = new Intent(MainActivity.this,Register.class);
+                    Intent intent = new Intent(MainActivity.this,SignupOrLogin.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
                 }
@@ -78,11 +76,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-/*
-        DatabaseReference  databaseReference = FirebaseDatabase.getInstance().getReference().child("Admin").child(mAuth.getCurrentUser().getUid());
-        databaseReference.child("online").setValue(false);
-        databaseReference.child("lastseen").setValue(ServerValue.TIMESTAMP);
- */
     }
 
     @Override
@@ -102,8 +95,10 @@ public class MainActivity extends AppCompatActivity {
             protected void populateViewHolder(final ExpensesViewHolder viewHolder, final Users model, final int position) {
 
 
-                viewHolder.itemLayout.setVisibility(View.VISIBLE);
-
+                if(model.getUserid().toString().equalsIgnoreCase(mAuth.getCurrentUser().getUid()))
+                    viewHolder.itemLayout.setVisibility(View.GONE);
+                else
+                    viewHolder.itemLayout.setVisibility(View.VISIBLE);
                 viewHolder.setName(model.getName());
                 viewHolder.setPhone(model.getPhone());
                 viewHolder.setOnline(model.getOnline());
@@ -153,11 +148,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         recyclerView.setAdapter(firebaseRecyclerAdapter);
-/*
-        DatabaseReference  databaseReference = FirebaseDatabase.getInstance().getReference().child("Admin").child(mAuth.getCurrentUser().getUid());
-        databaseReference.child("online").setValue(true);
-        databaseReference.child("lastseen").setValue(true);
-  */
+
     }
 
 
@@ -171,19 +162,19 @@ public class MainActivity extends AppCompatActivity {
         public ExpensesViewHolder(View itemView) {
             super(itemView);
             mview       =   itemView;
-            imageView   =   (ImageView) mview.findViewById(R.id.pic);
-            itemLayout  =   (LinearLayout) mview.findViewById(R.id.item_layout);
+            imageView   =   mview.findViewById(R.id.pic);
+            itemLayout  =   mview.findViewById(R.id.item_layout);
         }
 
         public void setName(String name)
         {
-            TextView amountTextViw =  (TextView) mview.findViewById(R.id.user_list_name);
+            TextView amountTextViw =  mview.findViewById(R.id.user_list_name);
             amountTextViw.setText(""+name);
         }
 
         public void setPhone(String phone)
         {
-            TextView amountTextViw =  (TextView) mview.findViewById(R.id.user_list_email);
+            TextView amountTextViw =   mview.findViewById(R.id.user_list_email);
             amountTextViw.setText(""+phone);
         }
 
@@ -193,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         }
         public void setOnline(boolean status)
         {
-            ImageView imageView = (ImageView) mview.findViewById(R.id.online_status);
+            ImageView imageView = mview.findViewById(R.id.online_status);
             if(status)
             {
                 imageView.setVisibility(View.VISIBLE);

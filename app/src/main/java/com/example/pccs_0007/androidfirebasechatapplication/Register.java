@@ -37,20 +37,33 @@ public class Register extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        initialiseIDS();
+        initialiseObjects();
+        initialiseClickListeners();
 
+    }
+
+    private void initialiseIDS()
+    {
+        password = findViewById(R.id.password);
+        register = findViewById(R.id.register);
+        email   =  findViewById(R.id.email);
+
+    }
+
+    private void initialiseObjects(){
         mAuth   = FirebaseAuth.getInstance();
         progressDialog  =   new ProgressDialog(this);
         firebaseDatabase = FirebaseDatabase.getInstance().getReference().child("Admin");
 
+    }
 
-
-        password = (EditText)findViewById(R.id.password);
-        register = (Button)findViewById(R.id.register);
-        email   =   (EditText)findViewById(R.id.email);
+    private void initialiseClickListeners()
+    {
         register.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                 String sPassword            = password.getText().toString();
+                String sPassword            = password.getText().toString();
                 String sEmail               = email.getText().toString();
 
 
@@ -79,7 +92,6 @@ public class Register extends AppCompatActivity {
                                 progressDialog.dismiss();
                                 firebaseDatabase.keepSynced(true);
                                 Intent intent = new Intent(Register.this, UploadImage.class);
-                                intent.putExtra("usertype",""+userType);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                                 startActivity(intent);
 
@@ -100,7 +112,6 @@ public class Register extends AppCompatActivity {
 
             }
         });
-
     }
 
 }

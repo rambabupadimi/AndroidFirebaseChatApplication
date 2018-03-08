@@ -19,11 +19,8 @@ public class SignupOrLogin extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup_or_login);
-        signup  = (Button)findViewById(R.id.signup);
-        siginin =   (Button)findViewById(R.id.signin);
-
-        TextView middle = (TextView)findViewById(R.id.main_note);
-
+        signup  = findViewById(R.id.signup);
+        siginin = findViewById(R.id.signin);
 
         Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
         Account[] accounts = AccountManager.get(this).getAccounts();
@@ -36,7 +33,7 @@ public class SignupOrLogin extends AppCompatActivity {
         }
 
 
-        signupadmin =   (Button)findViewById(R.id.signup_admin);
+        signupadmin =   findViewById(R.id.signup_admin);
         signupadmin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

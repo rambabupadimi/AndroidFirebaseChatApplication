@@ -30,14 +30,10 @@ import static android.view.View.VISIBLE;
 public class LoginActivity extends AppCompatActivity {
 
     EditText loginEmail,loginPassword;
-    Button loginUserButtonTAB;
     Button loginUser;
-
     private String TAG ="LoginActivity";
-
     private FirebaseAuth mAuth;
-    private DatabaseReference firebaseDatabase,firebaseDatabase1;
-    Query query;
+    private DatabaseReference firebaseDatabase;
     LinearLayout loginUserSection;
 
     public static ProgressDialog progressDialog;
@@ -47,28 +43,22 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        mAuth    =    FirebaseAuth.getInstance();
-        firebaseDatabase    =   FirebaseDatabase.getInstance().getReference().child("Users");
-
-        firebaseDatabase.keepSynced(true);
-        loginEmail  =   (EditText) findViewById(R.id.login_email);
-        loginPassword   =   (EditText) findViewById(R.id.login_password);
-
-        loginUser       =   (Button) findViewById(R.id.login_user_button);
-        loginUserSection    =   (LinearLayout) findViewById(R.id.login_user_section);
+        initialiseIds();
+        initialiseObjects();
+        initialiseClickListeners();
 
 
+    }
+
+    private void initialiseClickListeners()
+    {
         loginUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-
                 loginUserSection.setVisibility(VISIBLE);
-
                 loginUser.setBackgroundColor(Color.parseColor("#5ba8b7"));
                 loginUser.setTextColor(Color.WHITE);
-
-
                 progressDialog = new ProgressDialog(LoginActivity.this);
                 progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
                 progressDialog.setTitle("Please Wait");
@@ -96,17 +86,28 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+    }
 
-
+    private void initialiseIds()
+    {
+        mAuth    =    FirebaseAuth.getInstance();
+        firebaseDatabase    =   FirebaseDatabase.getInstance().getReference().child("Admin");
+        firebaseDatabase.keepSynced(true);
 
     }
 
+    private void initialiseObjects()
+    {
+        loginEmail          =    findViewById(R.id.login_email);
+        loginPassword       =    findViewById(R.id.login_password);
+        loginUser           =   findViewById(R.id.login_user_button);
+        loginUserSection    =   findViewById(R.id.login_user_section);
+
+    }
     private void checkUserExist()
     {
         final String usrid = mAuth.getCurrentUser().getUid();
-        Log.i(TAG,"userid id"+usrid);
-
-        firebaseDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child(usrid);
+        firebaseDatabase = FirebaseDatabase.getInstance().getReference().child("Admin").child(usrid);
         firebaseDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

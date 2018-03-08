@@ -20,10 +20,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MyViewHolder> 
     private List<ChatMessage> chatMessageList;
     String senderId;
     private SparseBooleanArray selectedItems;
-    private static int currentSelectedIndex = -1;
     public static int itemPositionInAdapter=0;
 
-    private ChatListAdapterListener listener;
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         TextView messageLeft,messageRight,messageLeftTime,messageRightTime;
@@ -34,16 +32,16 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MyViewHolder> 
 
         public MyViewHolder(View view) {
             super(view);
-            leftLayout = (LinearLayout) view.findViewById(R.id.message_layout_left);
-            rightLayout = (LinearLayout) view.findViewById(R.id.message_layout_right);
-            messageLeft =  (TextView) view.findViewById(R.id.message_left);
-            messageLeftTime =  (TextView) view.findViewById(R.id.send_time_left);
-            messageRight =  (TextView) view.findViewById(R.id.message_right);
-            messageRightTime =  (TextView) view.findViewById(R.id.send_time_right);
+            leftLayout      =   view.findViewById(R.id.message_layout_left);
+            rightLayout     =   view.findViewById(R.id.message_layout_right);
+            messageLeft     =   view.findViewById(R.id.message_left);
+            messageLeftTime =   view.findViewById(R.id.send_time_left);
+            messageRight    =   view.findViewById(R.id.message_right);
+            messageRightTime =  view.findViewById(R.id.send_time_right);
 
 
-            dateAndTimeLayout   = (LinearLayout) itemView.findViewById(R.id.date_and_time_chat_layout);
-            dateAndTimeTextview = (TextView) itemView.findViewById(R.id.date_and_time_bubble);
+            dateAndTimeLayout   =  itemView.findViewById(R.id.date_and_time_chat_layout);
+            dateAndTimeTextview = itemView.findViewById(R.id.date_and_time_bubble);
             dateAndTimeLayout.setEnabled(false);
             dateAndTimeLayout.setClickable(false);
 
@@ -51,18 +49,12 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MyViewHolder> 
     }
 
 
-    public ChatAdapter(List<ChatMessage> chatMessageList, String senderId, ChatListAdapterListener listener) {
+    public ChatAdapter(List<ChatMessage> chatMessageList, String senderId) {
         this.chatMessageList = chatMessageList;
         this.senderId = senderId;
-        this.listener = listener;
         selectedItems       =   new SparseBooleanArray();
 
     }
-    public  ChatMessage getItemScrolledPosition()
-    {
-        return chatMessageList.get(itemPositionInAdapter);
-    }
-
 
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -95,25 +87,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MyViewHolder> 
 
         holder.itemView.setActivated(selectedItems.get(position, false));
 
-        holder.rightLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                listener.onMessageRowClicked(position);
-            }
-        });
-
         showDateAndTimeLayout(holder,chatMessageList,position);
 
-        holder.rightLayout.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                listener.onRowLongClicked(position);
 
-                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                return true;
-
-            }
-        });
 
     }
 
@@ -122,49 +98,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MyViewHolder> 
         return (chatMessageList!=null)?chatMessageList.size():0;
     }
 
-    public void toggleSelection(int pos) {
-        currentSelectedIndex = pos;
-        if (selectedItems.get(pos, false)) {
-            selectedItems.delete(pos);
-
-        } else {
-            selectedItems.put(pos, true);
-        }
-        notifyItemChanged(pos);
-    }
 
 
-    private void resetCurrentIndex() {
-        currentSelectedIndex = -1;
-    }
-
-
-    public SparseBooleanArray getSelectedItemsListData()
-    {
-        return selectedItems;
-    }
-
-    public void clearSelections() {
-        //  reverseAllAnimations = true;
-        selectedItems.clear();
-
-        notifyDataSetChanged();
-    }
-
-    public int getSelectedItemCount() {
-        return selectedItems.size();
-    }
-
-
-    public interface ChatListAdapterListener {
-        void onIconClicked(int position);
-
-        void onIconImportantClicked(int position);
-
-        void onMessageRowClicked(int position);
-
-        void onRowLongClicked(int position);
-    }
 
 
     private void showDateAndTimeLayout(MyViewHolder holder, List<ChatMessage> chatMessageEntityList, int position)
@@ -183,12 +118,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MyViewHolder> 
                 {
                     holder.dateAndTimeTextview.setText("TODAY");
                 }
-/*
-                else if(prevDate.equalsIgnoreCase(DateTimeUtilities.getYesterdayDate()))
-                {
-                    holder.dateAndTimeTextview.setText(" YESTERDAY ");
-                }
-*/
+
                 else {
                     holder.dateAndTimeTextview.setText(DateTimeUtilities.getConvertedTime(prevDate));
                 }
@@ -207,12 +137,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MyViewHolder> 
                     {
                         holder.dateAndTimeTextview.setText("TODAY");
                     }
-/*
-                    else if(currentDate.equalsIgnoreCase(DateTimeUtilities.getYesterdayDate()))
-                    {
-                        holder.dateAndTimeTextview.setText("YESTERDAY");
-                    }
-*/
+
                     else {
                         holder.dateAndTimeTextview.setText(DateTimeUtilities.getConvertedTime(currentDate));
                     }

@@ -26,7 +26,6 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 public class UploadImage extends AppCompatActivity {
 
     Button next;
-    Button upload;
     ImageView uploadImage;
     private Uri filePath;
     FirebaseAuth mAuth;
@@ -40,10 +39,29 @@ public class UploadImage extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_upload_image);
 
-        next = (Button) findViewById(R.id.next);
-        name    = (EditText) findViewById(R.id.name);
-        phone   = (EditText) findViewById(R.id.phone);
+        initialiseIDs();
+        initialiseObjects();
+        initialiseClickListeners();
 
+
+
+    }
+
+    private void initialiseIDs()
+    {
+        next        =  findViewById(R.id.next);
+        name        =  findViewById(R.id.name);
+        phone       =  findViewById(R.id.phone);
+        uploadImage =  findViewById(R.id.upload_image);
+
+
+    }
+    private void initialiseObjects()
+    {
+
+    }
+    private void initialiseClickListeners()
+    {
         next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,9 +70,6 @@ public class UploadImage extends AppCompatActivity {
                 }
             }
         });
-
-        //upload  = (Button)findViewById(R.id.upload_button);
-        uploadImage = (ImageView)findViewById(R.id.upload_image);
         uploadImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -66,19 +81,15 @@ public class UploadImage extends AppCompatActivity {
 
             }
         });
-
-
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             filePath = data.getData();
             try {
-
-                //   Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePath);
-                //   uploadImage.setImageBitmap(bitmap);
 
                 CropImage.activity(filePath)
                         .setGuidelines(CropImageView.Guidelines.ON)

@@ -1,19 +1,15 @@
 package com.example.pccs_0007.androidfirebasechatapplication;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -44,14 +40,11 @@ import java.util.Date;
 import java.util.List;
 
 
-import static android.view.View.VISIBLE;
-
-public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatListAdapterListener {
+public class ChatActivity extends AppCompatActivity {
 
     private RecyclerView chatRecyclerView;
     private EmojiEditText message;
     private ImageView send;
-    private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
     private String senderId,receiverId;
     private FirebaseAuth mAuth;
@@ -62,64 +55,44 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
     EmojiPopup emojiPopup;
     ViewGroup rootView;
     TextView onlineStatus;
-
     LinearLayout chatDateTimeLayout;
     TextView chatDateTimeTextView;
-
-
     private String TAG ="chatactivity";
-    private boolean check = false;
+    Toolbar chatToolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        chatMessageList = new ArrayList<ChatMessage>();
 
-        onlineStatus    = (TextView) findViewById(R.id.chat_toolbar_online);
-
-        chatRecyclerView = (RecyclerView) findViewById(R.id.chat_recylerview);
-        message = (EmojiEditText) findViewById(R.id.emojiEditText);
-        send = (ImageView) findViewById(R.id.send);
-        mAuth = FirebaseAuth.getInstance();
-
-        emojiButton = (ImageView) findViewById(R.id.main_activity_emoji);
-        emojiButton.setColorFilter(ContextCompat.getColor(this, R.color.emoji_icons), PorterDuff.Mode.SRC_IN);
-
-        rootView = (ViewGroup) findViewById(R.id.main_activity_root_view);
-
-        try {
-            senderId = mAuth.getCurrentUser().getUid();
-            receiverId = getIntent().getStringExtra("userid");
+        initialiseIDs();
+        initialiseObjects();
+        initialiseToolbar();
+        initialiseRecyclerView();
+        initialiseClickListeners();
+        setUpEmojiPopup();
 
 
-            Log.i("tag","yes sender id"+senderId);
-            Log.i("tag","yes receiver id"+receiverId);
+    }
 
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        chatDateTimeLayout   = (LinearLayout)findViewById(R.id.date_and_time_chat_layout);
-        chatDateTimeTextView = (TextView) findViewById(R.id.date_and_time_bubble);
-        chatDateTimeLayout.setEnabled(false);
-        chatDateTimeLayout.setClickable(false);
-
+    private void initialiseRecyclerView()
+    {
 
         databaseReference = FirebaseDatabase.getInstance().getReference().child("Messages");
         databaseReference.keepSynced(true);
-
-
-
-        chatAdapter = new ChatAdapter(chatMessageList, senderId,this);
-        chatRecyclerView = (RecyclerView) findViewById(R.id.chat_recylerview);
+        chatAdapter = new ChatAdapter(chatMessageList, senderId);
+        chatRecyclerView = findViewById(R.id.chat_recylerview);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(ChatActivity.this);
         linearLayoutManager.setStackFromEnd(true);
         chatRecyclerView.setLayoutManager(linearLayoutManager);
         chatRecyclerView.setAdapter(null);
         chatRecyclerView.setAdapter(chatAdapter);
 
+
+    }
+
+    private void initialiseClickListeners()
+    {
 
         send.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,7 +107,6 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
                 databaseReference.push().setValue(chatMessage);
                 databaseReference.keepSynced(true);
 
-                check = true;
 
                 message.setText("");
                 getWindow().setSoftInputMode(
@@ -148,12 +120,7 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Log.i("val", "data snapchat" + dataSnapshot.getValue());
-                Log.i("val", "children" + dataSnapshot.getChildren());
-                Log.i("tag", "listener for single event called");
-                //   for (DataSnapshot postSnapshot: dataSnapshot.getChildren()) {
                 ChatMessage chatMessage = dataSnapshot.getValue(ChatMessage.class);
-                Log.i("tag", "chatmessage" + chatMessage);
                 if (chatMessage.getSenderId_receiverId().toString().equalsIgnoreCase(senderId + "_" + receiverId)
                         || chatMessage.getSenderId_receiverId().toString().equalsIgnoreCase(receiverId + "_" + senderId)) {
                     chatMessageList.add(chatMessage);
@@ -220,105 +187,52 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
                 emojiPopup.toggle();
             }
         });
+    }
 
-
-        setUpEmojiPopup();
-
+    private void initialiseToolbar()
+    {
+        setSupportActionBar(chatToolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
     }
 
-
-    public class CustomScrollListener extends RecyclerView.OnScrollListener {
-        public CustomScrollListener() {
-
-        }
-
-        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-            switch (newState) {
-                case RecyclerView.SCROLL_STATE_IDLE:
-                    Runnable mRunnable;
-                    Handler mHandler = new Handler();
-                    mRunnable = new Runnable() {
-                        @Override
-                        public void run() {
-                            chatDateTimeLayout.setVisibility(View.GONE); //This will remove the View. and free s the space occupied by the View
-                        }
-                    };
-                    mHandler.postDelayed(mRunnable, 2 * 1000);
-                    break;
-
-                case RecyclerView.SCROLL_STATE_DRAGGING:
-                    break;
-                case RecyclerView.SCROLL_STATE_SETTLING:
-                    callScrollDateTime();
-                    break;
-
-            }
-
-        }
-
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-
-            if (dx > 0) {
-                System.out.println("Scrolled Right");
-            } else if (dx < 0) {
-                System.out.println("Scrolled Left");
-            } else {
-                System.out.println("No Horizontal Scrolled");
-            }
-            if (dy > 0) {
-                if (chatAdapter.itemPositionInAdapter < 3) {
-                    chatDateTimeLayout.setVisibility(View.GONE);
-                } else if (chatMessageList != null && (chatMessageList.size() - 2 <= chatAdapter.itemPositionInAdapter)) {
-                    chatDateTimeLayout.setVisibility(View.GONE);
-                } else {
-                    callScrollDateTime();
-                }
-            } else if (dy < 0) {
-                if (chatAdapter.itemPositionInAdapter < 3) {
-                    chatDateTimeLayout.setVisibility(View.GONE);
-                } else if (chatMessageList != null && (chatMessageList.size() - 2 <= chatAdapter.itemPositionInAdapter)) {
-                    chatDateTimeLayout.setVisibility(View.GONE);
-                } else {
-                    callScrollDateTime();
-                }
-            } else {
-                System.out.println("No Vertical Scrolled");
-                chatDateTimeLayout.setVisibility(View.GONE);
-            }
-        }
-    }
-
-
-
-
-    private void callScrollDateTime() {
-        chatDateTimeLayout.setVisibility(VISIBLE);
-        ChatMessage chatMessageEntity = chatAdapter.getItemScrolledPosition();
-        if (chatMessageEntity != null) {
-
-            String currentDate = chatMessageEntity.getSent_time();
-
-            String dateIs = currentDate.split(" ")[0];
-
-
-            Log.i("tag","current date only is"+ DateTimeUtilities.getCurrentOnlyDate());
-
-            if (dateIs.equalsIgnoreCase(DateTimeUtilities.getCurrentOnlyDate())) {
-                chatDateTimeTextView.setText("  TODAY");
-            }
-/*
- else if (currentDate.equalsIgnoreCase(DateTimeUtilities.getYesterdayDate())) {
-
-                chatDateTimeTextView.setText(" YESTERDAY ");
-            } */else {
-                chatDateTimeTextView.setText(DateTimeUtilities.getConvertedTime(currentDate));
-            }
-        }
+    private void initialiseIDs()
+    {
+        onlineStatus        = findViewById(R.id.chat_toolbar_online);
+        chatToolbar         =   findViewById(R.id.chat_toolbar);
+        chatRecyclerView    = findViewById(R.id.chat_recylerview);
+        message             = findViewById(R.id.emojiEditText);
+        send                = findViewById(R.id.send);
+        mAuth               = FirebaseAuth.getInstance();
+        emojiButton         =  findViewById(R.id.main_activity_emoji);
+        emojiButton.setColorFilter(ContextCompat.getColor(this, R.color.emoji_icons), PorterDuff.Mode.SRC_IN);
+        rootView            =  findViewById(R.id.main_activity_root_view);
+        chatDateTimeLayout   = findViewById(R.id.date_and_time_chat_layout);
+        chatDateTimeTextView =  findViewById(R.id.date_and_time_bubble);
+        chatDateTimeLayout.setEnabled(false);
+        chatDateTimeLayout.setClickable(false);
 
     }
 
+    private void initialiseObjects()
+    {
+        chatMessageList     = new ArrayList<>();
+        try {
+            senderId = mAuth.getCurrentUser().getUid();
+            receiverId = getIntent().getStringExtra("userid");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if(item.getItemId() == android.R.id.home)
+            finish();
+        return super.onOptionsItemSelected(item);
+
+    }
 
     public String getCurrentDateAndTime()
     {
@@ -357,6 +271,10 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
                 .setOnEmojiBackspaceClickListener(new OnEmojiBackspaceClickListener() {
                     @Override
                     public void onEmojiBackspaceClicked(final View v) {
+                        if (emojiPopup != null) {
+                            emojiPopup.dismiss();
+                        }
+
                         Log.d(TAG, "Clicked on Backspace");
                     }
                 })
@@ -388,6 +306,10 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
                     @Override
                     public void onKeyboardClose() {
                         Log.d(TAG, "Closed soft keyboard");
+                        if (emojiPopup != null) {
+                            emojiPopup.dismiss();
+                        }
+
                     }
                 })
                 .build(message);
@@ -398,9 +320,6 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
 
     @Override
     protected void onPause() {
-        // Unregister since the activity is paused.
-        // LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusReceiver);
         super.onPause();
     }
 
@@ -416,34 +335,9 @@ public class ChatActivity extends AppCompatActivity implements ChatAdapter.ChatL
 
 
 
-    private BroadcastReceiver statusReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals("chat-user-status-received"))
-            {
-                //     setUserStatus();
-            }
-        }
-    };
 
-
-    @Override
-    public void onIconClicked(int position) {
-
-    }
-
-    @Override
-    public void onIconImportantClicked(int position) {
-
-    }
-
-    @Override
-    public void onMessageRowClicked(int position) {
-
-    }
-
-    @Override
-    public void onRowLongClicked(int position) {
-
-    }
 }
+
+
+
+
