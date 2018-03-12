@@ -1,6 +1,7 @@
 package com.example.pccs_0007.androidfirebasechatapplication;
 
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -60,6 +61,7 @@ public class ChatActivity extends AppCompatActivity {
     private String TAG ="chatactivity";
     Toolbar chatToolbar;
 
+    TextView toolbarTextHeading;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -193,7 +195,12 @@ public class ChatActivity extends AppCompatActivity {
     {
         setSupportActionBar(chatToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        final Drawable upArrow =getResources().getDrawable(R.drawable.vector_back_white_icon);
+        upArrow.setColorFilter(getResources().getColor(R.color.colorWhite), PorterDuff.Mode.SRC_ATOP);
+        getSupportActionBar().setHomeAsUpIndicator(upArrow);
 
+        toolbarTextHeading = findViewById(R.id.chat_toolbar_textview);
+        toolbarTextHeading.setText(getIntent().getStringExtra("name"));
     }
 
     private void initialiseIDs()

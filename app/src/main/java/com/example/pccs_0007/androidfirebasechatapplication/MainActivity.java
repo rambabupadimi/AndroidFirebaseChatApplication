@@ -14,12 +14,17 @@ import android.widget.TextView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -29,16 +34,23 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
     private RecyclerView recyclerView;
-    FirebaseRecyclerAdapter<Users,ExpensesViewHolder> firebaseRecyclerAdapter;
-
-
+    List<Users> usersList =new ArrayList<>();
+    int count=0;
+    TextView toolbarHeading;
+    ChatUserListAdapter chatUserListAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_users_list);
-
+        initialiseIDs();
         userNotExist();
         setRecyclerView();
+    }
+
+    private void initialiseIDs()
+    {
+        toolbarHeading = findViewById(R.id.toolbar_heading);
+
     }
 
     private void setRecyclerView()
@@ -49,10 +61,45 @@ public class MainActivity extends AppCompatActivity {
             database.setPersistenceEnabled(true);
         }
 
+
         databaseReference   = FirebaseDatabase.getInstance().getReference().child("Admin");
-        recyclerView        =  findViewById(R.id.chat_user_list_recylerview);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(linearLayoutManager);
+        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                    for(DataSnapshot dataSnapshot1:dataSnapshot.getChildren()){
+
+                         count++;
+                        Users users = dataSnapshot1.getValue(Users.class);
+                        if(users.getUserid().toString().equalsIgnoreCase(mAuth.getCurrentUser().getUid()))
+                        {
+                            Log.i("tag","use not "+users.getName());
+                        }
+                        else
+                        {
+
+                            usersList.add(users);
+                            if(count==dataSnapshot.getChildrenCount())
+                            {
+
+
+                                chatUserListAdapter = new ChatUserListAdapter(MainActivity.this,usersList);
+                                recyclerView        =  findViewById(R.id.chat_user_list_recylerview);
+                                LinearLayoutManager linearLayoutManager = new LinearLayoutManager(MainActivity.this);
+                                recyclerView.setLayoutManager(linearLayoutManager);
+                                recyclerView.setAdapter(chatUserListAdapter);
+
+                            }
+                            Log.i("tag","use yes "+users.getName());
+                        }
+
+                    }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
     }
 
@@ -67,6 +114,31 @@ public class MainActivity extends AppCompatActivity {
                     Intent intent = new Intent(MainActivity.this,SignupOrLogin.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(intent);
+                }
+                else
+                {
+                    FirebaseDatabase.getInstance().getReference().child("Admin").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if(dataSnapshot!=null)
+                            {
+                                for (DataSnapshot dataSnapshot1:dataSnapshot.getChildren()){
+                                    Users users = dataSnapshot1.getValue(Users.class);
+
+                                    if(users.getUserid().equalsIgnoreCase(mAuth.getCurrentUser().getUid())){
+                                        toolbarHeading.setText(users.getName());
+                                        return;
+                                    }
+                                }
+                            }
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
                 }
             }
         };
@@ -85,115 +157,7 @@ public class MainActivity extends AppCompatActivity {
         mAuth.addAuthStateListener(mAuthListener);
 
 
-        firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Users, ExpensesViewHolder>(
-                Users.class,
-                R.layout.chat_user_list_layout,
-                ExpensesViewHolder.class,
-                databaseReference
-        ) {
-            @Override
-            protected void populateViewHolder(final ExpensesViewHolder viewHolder, final Users model, final int position) {
-
-
-                if(model.getUserid().toString().equalsIgnoreCase(mAuth.getCurrentUser().getUid()))
-                    viewHolder.itemLayout.setVisibility(View.GONE);
-                else
-                    viewHolder.itemLayout.setVisibility(View.VISIBLE);
-                viewHolder.setName(model.getName());
-                viewHolder.setPhone(model.getPhone());
-                viewHolder.setOnline(model.getOnline());
-
-
-                Log.i("tag", "online status" + model.getOnline());
-                Log.i("tag", "name" + model.getName());
-                Log.i("tag", "phone" + model.getPhone());
-                Log.i("tag", "userid" + model.getUserid());
-                Log.i("tag", "url" + model.getImgurl());
-
-
-                if (model.getImgurl() != null) {
-                    if (model.getImgurl() != null) {
-                        if (model.getImgurl() != null && model.getImgurl().length() > 0) {
-                            Picasso.with(MainActivity.this).load(model.getImgurl()).networkPolicy(NetworkPolicy.OFFLINE)
-                                    .into(viewHolder.imageView, new Callback() {
-                                        @Override
-                                        public void onSuccess() {
-
-                                        }
-
-                                        @Override
-                                        public void onError() {
-                                            Picasso.with(MainActivity.this).load(model.getImgurl()).into(viewHolder.imageView);
-                                        }
-                                    });
-                        }
-                    }
-
-                }
-                viewHolder.mview.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-                        intent.putExtra("name", model.getName());
-                        intent.putExtra("phone", model.getPhone());
-                        intent.putExtra("userid", model.getUserid());
-                        startActivity(intent);
-
-                    }
-                });
-
-            }
-
-
-        };
-
-        recyclerView.setAdapter(firebaseRecyclerAdapter);
-
     }
 
 
-
-    public static class ExpensesViewHolder extends RecyclerView.ViewHolder
-    {
-
-        View mview;
-        ImageView imageView;
-        LinearLayout itemLayout;
-        public ExpensesViewHolder(View itemView) {
-            super(itemView);
-            mview       =   itemView;
-            imageView   =   mview.findViewById(R.id.pic);
-            itemLayout  =   mview.findViewById(R.id.item_layout);
-        }
-
-        public void setName(String name)
-        {
-            TextView amountTextViw =  mview.findViewById(R.id.user_list_name);
-            amountTextViw.setText(""+name);
-        }
-
-        public void setPhone(String phone)
-        {
-            TextView amountTextViw =   mview.findViewById(R.id.user_list_email);
-            amountTextViw.setText(""+phone);
-        }
-
-        public void setImage(String image)
-        {
-
-        }
-        public void setOnline(boolean status)
-        {
-            ImageView imageView = mview.findViewById(R.id.online_status);
-            if(status)
-            {
-                imageView.setVisibility(View.VISIBLE);
-            }
-            else
-            {
-                imageView.setVisibility(View.GONE);
-            }
-        }
-
-    }
 }

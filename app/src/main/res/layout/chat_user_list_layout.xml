@@ -38,12 +38,13 @@
         android:layout_gravity="center"
         android:layout_marginLeft="12dp"
         android:src="@drawable/green_color"
+        android:visibility="gone"
         android:id="@+id/online_status"/>
 </LinearLayout>
    <TextView
        android:layout_width="match_parent"
        android:layout_height="wrap_content"
-       android:text="babu.ramu111@gmail.com"
+       android:text="7095362286"
        android:textSize="10sp"
        android:id="@+id/user_list_email"
        android:layout_marginTop="2dp"/>
